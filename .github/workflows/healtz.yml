@@ -37,10 +37,14 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
 
-      - name: Install and setup mysql server
+      - name: Run apt update
+        run: sudo apt update          
+      
+      - name: install mysql-server       
+        run: sudo apt install mysql-server
+      
+      - name: Setup mysql server
         run: |
-          sudo apt update
-          sudo apt install mysql-server
           sudo systemctl start mysql.service
           mysql -v
           
