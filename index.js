@@ -2,6 +2,10 @@ import express from "express";
 import cors from "cors";
 import Sequelize from "sequelize";
 import mysql from "mysql2/promise";
+import { init_user_data } from './src/services/csv-helper.js';
+import express from 'express';
+import cors from "cors";
+
 
 const PORT = 8080;
 
@@ -44,8 +48,11 @@ app.get("/healthz", (req, res) => {
     });
 });
 
+init_user_data("./user.csv");   
+
 app.listen(PORT, () => {
   console.log("Server is running on port ", PORT);
 });
 
 export default app;
+
