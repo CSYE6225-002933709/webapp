@@ -14,8 +14,6 @@ const PORT = 8080;
 
 sequelize.sync().then((result) => {
 
-  console.log(result);
-
   app.listen(PORT, () => {
     console.log("Server is running on port ", PORT);
   });
