@@ -7,15 +7,13 @@ dotenv.config(); // Load .env file
 const userName = process.env.DB_USERNAME || "root";
 const password = process.env.DB_PASSWORD || "root";
 
-console.log(userName, password);
-
 await mysql
   .createConnection({
     user: userName,
     password: password,
   })
-  .then((connection) => {
-    connection.query("CREATE DATABASE IF NOT EXISTS saiDB;");
+  .then(async (connection) => {
+    await connection.query("CREATE DATABASE IF NOT EXISTS saiDB;").catch((err) => console.log(err));
     connection.end();
   })
   .catch((err) =>{
