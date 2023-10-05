@@ -2,30 +2,77 @@ import express from "express";
 import sequelize from "../configs/sequelize.js";
 import Assignment from "../models/Assignment.js";
 import bodyParser from "body-parser";
+import { decodeBase64 } from "../services/encryption.js";
+import Account from "../models/Account.js";
 
 const jsonParser = bodyParser.json();
 const router = express.Router();
 
 // GET /v1/assignments - Get List of All Assignments
 router.get("/v1/assignments", (req, res) => {
-  console.log("/v1/assignments get called");
+
   // TODO: Get from db
-  res.sendStatus(200);
+  decodeBase64(req.get("Authorization"))
+    .then(async (decodeString) => {
+      var user = null;
+
+      user = {
+        email: decodeString.split(":")[0],
+        password: decodeString.split(":")[1],
+      };
+
+      const account = await Account.findOne({ where: { email: user.email } });
+      
+      if (!account || !(await account.validPassword(user.password))) {
+        res.sendStatus(401); // Unauthorized
+        return;
+      }
+            
+      const assignments = await Assignment.findAll({ where: { userId: account.id } });
+      res.json(assignments).status(200);
+    })      
+    .catch((err) => {
+      console.log(err);
+      res.sendStatus(503);
+      return;
+    });
 });
 
 // POST /v1/assignments - Create Assignment
 router.post("/v1/assignments", jsonParser, (req, res) => {
-  const assignment = req.body;
-  console.log(assignment);
-  Assignment.create(assignment)
-    .then((data) => {
-      // TODO: add to db
-      res.sendStatus(201);
+  
+  decodeBase64(req.get("Authorization"))
+    .then((decodeString) => {
+      const assignment = req.body;
+      var user = null;
+
+      console.log("decoded", decodeString);
+
+      user = {
+        email: decodeString.split(":")[0],
+        password: decodeString.split(":")[1],
+      };
+
+      Account.findOne({ where: { email: user.email } })
+        .then(async (data) => {
+          if (await data.validPassword(user.password)) {
+            assignment.userId = data.id;
+            Assignment.create(assignment)
+              .then((data) => {
+                // TODO: add to db
+                res.sendStatus(201);
+              })
+              .catch((err) => {
+                console.log(err);
+                res.sendStatus(503);
+              });
+          } else {
+            res.sendStatus(503);
+          }
+        })
+        .catch((err) => console.log(err));
     })
-    .catch((err) => {
-      console.log(err);
-      res.sendStatus(503);
-    });
+    .catch((err) => console.log("Error decoding"));
 });
 
 router.get("/v1/assignments/:id", (req, res) => {
