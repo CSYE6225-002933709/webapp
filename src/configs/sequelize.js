@@ -16,7 +16,7 @@ const connection = await mysql.createConnection({
 await connection.query("CREATE DATABASE IF NOT EXISTS saiDB;");
 
 const sequelize = new Sequelize("saiDB", userName, password, {
-  host: "localhost",
+  host: "127.0.0.1",
   dialect: "mysql",
 });
 
