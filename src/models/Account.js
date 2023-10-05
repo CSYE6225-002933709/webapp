@@ -9,7 +9,7 @@ export const Account = sequelize.define("Account", {
     type: DataTypes.UUID,
     primaryKey: true,
     defaultValue: DataTypes.UUIDV4,
-    allowNull: false,
+    allowNull: false,    
     readOnly: true,
   },
   first_name: {
@@ -26,6 +26,7 @@ export const Account = sequelize.define("Account", {
   },
   email: {
     type: DataTypes.STRING,
+    unique: true,
     allowNull: false,
   },
 

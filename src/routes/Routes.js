@@ -10,7 +10,6 @@ const router = express.Router();
 
 // GET /v1/assignments - Get List of All Assignments
 router.get("/v1/assignments", (req, res) => {
-
   // TODO: Get from db
   decodeBase64(req.get("Authorization"))
     .then(async (decodeString) => {
@@ -22,15 +21,17 @@ router.get("/v1/assignments", (req, res) => {
       };
 
       const account = await Account.findOne({ where: { email: user.email } });
-      
+
       if (!account || !(await account.validPassword(user.password))) {
         res.sendStatus(401); // Unauthorized
         return;
       }
-            
-      const assignments = await Assignment.findAll({ where: { userId: account.id } });
+
+      const assignments = await Assignment.findAll({
+        where: { userId: account.id },
+      });
       res.json(assignments).status(200);
-    })      
+    })
     .catch((err) => {
       console.log(err);
       res.sendStatus(503);
@@ -40,7 +41,6 @@ router.get("/v1/assignments", (req, res) => {
 
 // POST /v1/assignments - Create Assignment
 router.post("/v1/assignments", jsonParser, (req, res) => {
-  
   decodeBase64(req.get("Authorization"))
     .then((decodeString) => {
       const assignment = req.body;
@@ -60,11 +60,11 @@ router.post("/v1/assignments", jsonParser, (req, res) => {
             Assignment.create(assignment)
               .then((data) => {
                 // TODO: add to db
-                res.sendStatus(201);
+                res.json(data).status(201);
               })
               .catch((err) => {
                 console.log(err);
-                res.sendStatus(503);
+                res.json({ error: "Invalid/duplicate data" }).status(503);
               });
           } else {
             res.sendStatus(503);
@@ -75,11 +75,13 @@ router.post("/v1/assignments", jsonParser, (req, res) => {
     .catch((err) => console.log("Error decoding"));
 });
 
-router.get("/v1/assignments/:id", (req, res) => {
+router.get("/v1/assignments/:id", async (req, res) => {
   const assignmentId = req.params.id;
-  var assignment = null;
+  const assignment = await Assignment.findOne({ where: { id: assignmentId } });
+
   // TODO: Get Assignment based on id
   console.log("/v1/assignments:id get called");
+
   if (!assignment) {
     res.status(404).json({ error: "Assignment not found" });
   } else {
@@ -87,29 +89,55 @@ router.get("/v1/assignments/:id", (req, res) => {
   }
 });
 
-router.delete("/v1/assignments/:id", (req, res) => {
-  const assignmentId = req.params.id;
-  // TODO : Delete assignment based on id
-  console.log("/v1/assignments:id delete called");
-  if (index === -1) {
-    res.status(404).json({ error: "Assignment not found" });
-  } else {
-    res.status(204).send();
+router.delete("/v1/assignments/:id", async (req, res) => {
+  try {
+    console.log("/v1/assignments:id delete called");
+    const assignment = await Assignment.findOne({
+      where: { id: req.params.id },
+    });
+
+    if (assignment) {
+      assignment.destroy();
+
+      res.status(204).json({ message: "Assignment deleted!" });
+      return;
+    } else {
+      res.status(500).json({ message: "Assignment not found" });
+      return;
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ error: "Execution error" });
   }
 });
 
-router.put("/v1/assignments/:id", (req, res) => {
+router.put("/v1/assignments/:id", jsonParser, async (req, res) => {
   const assignmentId = req.params.id;
-  const updatedAssignment = req.body;
 
-  // TODO : update assignmnent based on id
-  console.log("/v1/assignments:id put called");
-
-  if (index === -1) {
-    res.status(404).json({ error: "Assignment not found" });
-  } else {
-    res.json(updatedAssignment);
+  if (JSON.stringify(req.body) === "{}") {
+    console.log("Empty body");
+    res.status(404).json({ error: "Empty body" });
+    return;
   }
+
+  await Assignment.update(req.body, {
+    where: { id: assignmentId },
+  })
+    .then((result) => {
+      if (result[0] === 1) {
+        // The update was successful
+        res.sendStatus(204);
+      } else {
+        // No rows were updated (assignmentId might not exist)
+        res
+          .status(404)
+          .json({ error: "No matching assignment found for update" });
+      }
+    })
+    .catch((error) => {
+      console.error("Error updating assignment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    });
 });
 
 // ************* Default healthz apis *************

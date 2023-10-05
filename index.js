@@ -14,6 +14,8 @@ export var app = express();
 app.use(cors({ origin: "*" }));
 app.use(routes);
 app.use(jsonParser);
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 const PORT = 8080;
 
