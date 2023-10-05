@@ -4,9 +4,6 @@ import dotenv from "dotenv";
 
 dotenv.config(); // Load .env file
 
-var userName, password;
-
-
 const userName = process.env.DB_USERNAME || "root";
 const password = process.env.DB_PASSWORD || "root";
 
