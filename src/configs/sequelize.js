@@ -10,26 +10,26 @@ const password = process.env.DB_PASSWORD || "root";
 var sequelize = null;
 
 const createSequelizeInstance = () => {
-    
   sequelize = new Sequelize("saiDB", userName, password, {
-  host: "127.0.0.1",
-  dialect: "mysql",
+    host: "127.0.0.1",
+    dialect: "mysql",
   });
 };
 
-await mysql
-  .createConnection({
+try {
+
+  const connection = await mysql.createConnection({
     user: userName,
     password: password,
-  })
-  .then(async (connection) => {
-    await connection.query("CREATE DATABASE IF NOT EXISTS saiDB;")
-    .then(async () => {
-      await createSequelizeInstance();
-    });
-    })
-  .catch((err) => console.log(err));
+  });
+
+  await connection.query("CREATE DATABASE IF NOT EXISTS saiDB;");
+
+  createSequelizeInstance();
+
+} catch (err) {
   
-  
+  console.log(err);
+}
 
 export default sequelize;
