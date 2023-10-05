@@ -4,8 +4,19 @@ import dotenv from 'dotenv';
 
 dotenv.config(); // Load .env file
 
-const userName = process.env.DB_USERNAME;
-const password = process.env.DB_PASSWORD;
+var userName, password;
+
+if (process.env.DB_USERNAME === '') {
+  
+  userName = "root";
+  password = "root";
+
+} else {
+
+  userName = process.env.DB_USERNAME;
+  password = process.env.DB_PASSWORD;
+}
+
 
 // TODO : implement .env
 const connection = await mysql.createConnection({
