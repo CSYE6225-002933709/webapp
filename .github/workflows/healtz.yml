@@ -29,11 +29,11 @@ jobs:
         run: sudo apt update          
       
       - name: install mysql-server       
-        run: sudo apt install mysql-server
+        # run: sudo apt install mysql-server
       
       - name: Setup mysql server
         run: |
-          sudo systemctl start mysql.service
+          # sudo systemctl start mysql.service
           ps aux | grep mysql
       
       - name: Install dependecies
