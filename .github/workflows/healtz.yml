@@ -29,13 +29,13 @@ jobs:
         run: sudo apt update          
       
       - name: install mysql-server       
-        run: sudo apt install mysql-server
+        # run: sudo apt install mysql-server
       
-      - name: Setup mysql server
-        run: |
-          sudo systemctl start mysql.service
-          ps aux | grep mysql
-          mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS saiDB;"
+      #- name: Setup mysql server
+        # run: |
+        #  sudo systemctl start mysql.service
+        #  ps aux | grep mysql
+        #  mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS saiDB;"
       
       - name: Install dependecies
         run: npm i             
