@@ -27,12 +27,7 @@ jobs:
 
       - name: Run apt update
         run: sudo apt update          
-            
-      - name: Setup mysql server
-        run: |
-          ps aux | grep mysql
-          mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS saiDB;"
-      
+                  
       - name: Install dependecies
         run: npm i             
 
