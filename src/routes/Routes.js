@@ -35,7 +35,7 @@ router.get("/v1/assignments", (req, res) => {
             model_name: model.name,
             model_points: model.points,
             num_of_attempts: model.num_of_attempts,
-            deadline: model.deadline,            
+            deadline: model.deadline,
           }));
 
           res.json(updatedAssignemts).status(200);
@@ -53,75 +53,53 @@ router.get("/v1/assignments", (req, res) => {
 });
 
 // POST /v1/assignments - Create Assignment
-router.post("/v1/assignments", jsonParser, (req, res) => {
+router.post("/v1/assignments", jsonParser, async (req, res) => {
+
   if (!req.get("Authorization")) {
     res.status(401).json();
     return;
   }
 
-  decodeBase64(req.get("Authorization"))
-    .then(async (decodeString) => {
-      const assignment = req.body;
-      var user = null;
+  try {
+    const decodeString = await decodeBase64(req.get("Authorization"));
+    const assignment = req.body;
+    var user = null;
 
-      user = {
-        email: decodeString.split(":")[0],
-        password: decodeString.split(":")[1],
-      };
+    user = {
+      email: decodeString.split(":")[0],
+      password: decodeString.split(":")[1],
+    };
 
-      const account = await Account.findOne({
-        where: { email: user.email },
-      }).catch((err) => {
-        console.log(err);
-        res.status(400).json();
-        return;
-      });
-
-      if (!account || !(await account.validPassword(user.password))) {
-        res.status(401).json(); // Unauthorized
-        return;
-      }
-
-      assignment.userId = account.id;
-
-      const searchAssignment = await Assignment.findOne({
-        where: { name: assignment.name },
-      }).catch((err) => {
-        console.log("1", err);
-        res.status(400).json();
-        return;
-      });
-
-      if (searchAssignment) {
-        res.status(400).json();
-        return;
-      } else {
-        try {
-          const data = await Assignment.create(assignment);
-          const updatedAssignemts = {
-            id: data.id,
-            assignment_created: data.createdAt,
-            assignment_updated: data.updatedAt,
-            model_name: data.name,
-            model_points: data.points,
-            num_of_attempts: data.num_of_attempts,
-            deadline: data.deadline,            
-          };
-
-          res.statusCode = 201;
-          res.statusMessage = "Assignment Created";
-          res.end(updatedAssignemts);
-        } catch (error) {
-          console.log(err);
-          res.json().status(400);
-          return;
-        }
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.json().status(403);
+    const account = await Account.findOne({
+      where: { email: user.email },
     });
+
+    if (!account || !(await account.validPassword(user.password))) {
+      res.status(401).json(); // Unauthorized
+      return;
+    }
+
+    assignment.userId = account.id;
+
+    const data = await Assignment.create(assignment);
+    const updatedAssignemts = {
+      id: data.id,
+      assignment_created: data.createdAt,
+      assignment_updated: data.updatedAt,
+      model_name: data.name,
+      model_points: data.points,
+      num_of_attempts: data.num_of_attempts,
+      deadline: data.deadline,
+    };
+
+    res.statusCode = 201;
+    res.statusMessage = "Assignment Created";
+    res.json(updatedAssignemts);
+    return;
+  } catch (error) {
+    console.log(error);
+    res.json().status(400);
+  }
 });
 
 router.get("/v1/assignments/:id", async (req, res) => {
@@ -170,7 +148,7 @@ router.get("/v1/assignments/:id", async (req, res) => {
           model_name: assignment.name,
           model_points: assignment.points,
           num_of_attempts: assignment.num_of_attempts,
-          deadline: assignment.deadline,          
+          deadline: assignment.deadline,
         };
 
         res.json(updatedAssignemts).status(200);
@@ -289,22 +267,19 @@ router.put("/v1/assignments/:id", jsonParser, async (req, res) => {
           // The update was successful
           res.status(204).json();
           return;
-
         } else {
           // No rows were updated (assignmentId might not exist)
           res.json().status(400);
           return;
         }
-
       } catch (error) {
         res.json().status(400);
         return;
       }
-      
     })
     .catch(() => {
       res.json().status(400);
-    });    
+    });
 });
 
 // ************* Default healthz apis *************
