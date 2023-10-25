@@ -83,12 +83,4 @@ build {
       "instance_setup.sh"
     ]
   }
-<<<<<<< HEAD
 }
-=======
-
-  
-}
-
-// ami-0c76bb972ccfbd5e2
->>>>>>> 5a726e1 (A6: systemd (#62))
