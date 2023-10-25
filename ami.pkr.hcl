@@ -65,7 +65,7 @@ build {
 
   provisioner "file" {
 
-    source = "project.zip"
+    source = "proct.zip"
     destination = "~/project.zip"
   }
   
@@ -77,3 +77,5 @@ build {
     scripts = [
       "instance_setup.sh"
     ]
+  }
+}
