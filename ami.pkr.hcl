@@ -77,7 +77,3 @@ build {
     scripts = [
       "instance_setup.sh"
     ]
-  }
-
-  
-}
