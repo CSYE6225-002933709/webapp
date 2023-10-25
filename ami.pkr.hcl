@@ -66,7 +66,12 @@ build {
   provisioner "file" {
 
     source = "project.zip"
-    destination = "~/project.zip"
+    destination = "/home/admin/project.zip"
+  }
+
+  provisioner "file" {
+    source = "webapp.service"
+    destination  = "/home/admin/webapp.service"
   }
   
   provisioner "shell" {
@@ -81,3 +86,5 @@ build {
 
   
 }
+
+// ami-0c76bb972ccfbd5e2
