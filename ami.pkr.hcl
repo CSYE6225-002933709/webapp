@@ -65,7 +65,7 @@ build {
 
   provisioner "file" {
 
-    source = "proct.zip"
+    source = "project.zip"
     destination = "~/project.zip"
   }
   
