@@ -35,8 +35,7 @@ router.get("/v1/assignments", (req, res) => {
             model_name: model.name,
             model_points: model.points,
             num_of_attempts: model.num_of_attempts,
-            deadline: model.deadline,
-            userId: model.userId,
+            deadline: model.deadline,            
           }));
 
           res.json(updatedAssignemts).status(200);
@@ -106,8 +105,7 @@ router.post("/v1/assignments", jsonParser, (req, res) => {
             model_name: data.name,
             model_points: data.points,
             num_of_attempts: data.num_of_attempts,
-            deadline: data.deadline,
-            userId: data.userId,
+            deadline: data.deadline,            
           };
 
           res.statusCode = 201;
@@ -172,8 +170,7 @@ router.get("/v1/assignments/:id", async (req, res) => {
           model_name: assignment.name,
           model_points: assignment.points,
           num_of_attempts: assignment.num_of_attempts,
-          deadline: assignment.deadline,
-          userId: assignment.userId,
+          deadline: assignment.deadline,          
         };
 
         res.json(updatedAssignemts).status(200);
@@ -210,7 +207,7 @@ router.delete("/v1/assignments/:id", async (req, res) => {
       });
 
       if (!account || !(await account.validPassword(user.password))) {
-        res.status(401).json();
+        res.status(403).json();
         return;
       }
 
@@ -266,7 +263,7 @@ router.put("/v1/assignments/:id", jsonParser, async (req, res) => {
       });
 
       if (!account || !(await account.validPassword(user.password))) {
-        res.status(401).json();
+        res.status(403).json();
         return;
       }
 
