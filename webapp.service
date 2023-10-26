@@ -4,10 +4,9 @@ After=cloud-final.service
 
 [Service]
 Type=simple
-User=csye6225
-Group=csye6225
-WorkingDirectory=/opt/csye6225
-ExecStart=/usr/bin/node /opt/csye6225/index.js
+User=admin
+WorkingDirectory=/home/admin/webapp
+ExecStart=/usr/bin/node /home/admin/webapp/index.js
 Restart=always
 RestartSec=3
 

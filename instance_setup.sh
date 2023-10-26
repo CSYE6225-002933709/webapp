@@ -14,11 +14,10 @@ sudo rm -r node_modules
 sudo npm i
 sudo chmod -R 755 .
 sudo touch .env
-sudo chown -R admin:admin .
+sudo chown -R csye6225:csye6225 .
 
 sudo cp '/home/admin/webapp.service' '/etc/systemd/system/csye6225.service'
 sudo systemctl daemon-reload
 sudo systemctl enable csye6225
 sudo systemctl start csye6225
 sudo systemctl restart csye6225
-sudo systemctl stop csye6225

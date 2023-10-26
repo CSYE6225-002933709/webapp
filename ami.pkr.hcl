@@ -74,13 +74,4 @@ build {
     destination  = "/home/admin/webapp.service"
   }
   
-  provisioner "shell" {
-    environment_vars = [
-      "DEBIAN_FRONTEND=noninteractive",
-      "CHECKPOINT_DISABLE=1"
-    ]
-    scripts = [
-      "instance_setup.sh"
-    ]
-  }
 }
