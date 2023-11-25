@@ -4,6 +4,7 @@ import Assignment from "../models/Assignment.js";
 import bodyParser from "body-parser";
 import { decodeBase64 } from "../services/encryption.js";
 import Account from "../models/Account.js";
+import Submission from "../models/Submission.js";
 import winston from "winston";
 import "winston-cloudwatch";
 import StatsD from 'node-statsd';
@@ -409,6 +410,129 @@ router.put("/v1/assignments/:id", jsonParser, async (req, res) => {
       res.json().status(400);
       logger.error("400 error");
     });
+});
+
+router.post("/v1/assignments/:id/submission", jsonParser, async (req, res) => {
+
+  const assignmentId = req.params.id;
+
+  client.increment('SUBMISSION_REQ');
+
+  sequelize
+  .authenticate()
+  .catch((error) => {
+    
+    logger.error("503 error");
+    res.status(503).json();
+    return;
+  });
+  
+  if (!req.get("Authorization")) {
+
+    logger.error("401 error");
+    res.status(401).json();
+    return;
+  }  
+
+  console.log("1");
+
+  const decodeString = await decodeBase64(req.get("Authorization")).catch(() => {
+
+    console.log("6");      
+    res.json().status(400);
+    logger.error("400 error");
+  });    
+      
+      console.log("1.*");
+      var user = null;
+
+      user = {
+        email: decodeString.split(":")[0],
+        password: decodeString.split(":")[1],
+      };
+
+      console.log("1.2");
+      
+      const account = await Account.findOne({
+        where: { email: user.email },
+      });
+
+      console.log("1.3"); 
+
+      if (!account || !(await account.validPassword(user.password))) {
+        res.status(403).json();
+        logger.error("403 error");
+        return;
+      }
+
+      console.log("1.4"); 
+
+
+      if (JSON.stringify(req.body) === "{}") {
+        
+        res.status(400).json();
+        logger.error("400 error");
+        return;
+      }
+
+      console.log("1.5");      
+
+      const assignment = await Assignment.findOne({
+        where: { id: assignmentId },
+      });
+
+      if (!assignment) {
+        
+        res.status(404).json();
+        logger.error("404 error");
+        return;
+      }
+
+      if (!assignment.userId) {        
+        res.status(401).json();
+        logger.error("401 error");
+        return;
+      }
+
+      console.log("2");
+
+      try {
+        
+        const { submission_url } = req.body;
+
+        console.log("req body", req.body);
+
+        if (!submission_url) {
+
+          return res.status(400).send({ error: 'Submission URL is required' });
+        }
+
+
+        console.log("3");
+      
+        // Create a new Submission
+        const newSubmission = await Submission.create({
+
+          assignment_id: assignmentId,
+          submission_url: submission_url,
+        });
+
+        console.log("4");
+      
+        // Return the created Submission with a 201 status code
+        return res.status(201).json(newSubmission);
+
+      } catch (error) {
+
+        console.log("5");
+      
+        res.json().status(400);
+        logger.error("400 error");
+        return;
+      }
+    
+
+    console.log("7");      
 });
 
 // ************* Default healthz apis *************
