@@ -9,6 +9,8 @@ import winston from "winston";
 import "winston-cloudwatch";
 import StatsD from 'node-statsd';
 
+import AWS from "aws-sdk";
+
 const jsonParser = bodyParser.json();
 const router = express.Router();
 
@@ -499,23 +501,77 @@ router.post("/v1/assignments/:id/submission", jsonParser, async (req, res) => {
       try {
         
         const { submission_url } = req.body;
-
         console.log("req body", req.body);
 
         if (!submission_url) {
-
           return res.status(400).send({ error: 'Submission URL is required' });
         }
 
-
         console.log("3");
-      
+        
+        const currentDate = new Date();
+        const deadlineDate = new Date(assignment.deadline);
+        const submission_limit = assignment.num_of_attempts;
+
+        // Compare the submission date to the assignment date
+        if (deadlineDate < currentDate) {
+
+          console.log("Deadline error");
+          res.status(403).json();
+          logger.error("403 error, Deadline has passed");
+          return;
+        }
+
+        // Count the number of submissions and return error if exceeded limit
+                
+        const submissions = await Submission.findAll({
+          where: { assignment_id: assignmentId },
+        });
+                
+        if (submissions.length >= submission_limit) {
+          
+          res.status(400).json();
+          logger.error("400 error, Max attempts reached");
+          return;
+        }
+
         // Create a new Submission
         const newSubmission = await Submission.create({
 
           assignment_id: assignmentId,
           submission_url: submission_url,
         });
+
+        const snsClient = new AWS.SNS({
+          apiVersion: "2010-03-31",
+          region: "us-east-1"
+        });
+  
+        const snsMessage = {
+          url: submission_url,
+          user: {
+            email: user.email            
+          },
+        };
+    
+        //const topicsData = await snsClient.listTopics().promise();
+        //const topicArn = topicsData.Topics.find(topic => topic.TopicArn.includes('saiSNS')).TopicArn;    
+        const snsArn = process.env.SNS_ARN
+    
+        const snsParams = {
+          Message: JSON.stringify(snsMessage),
+          TopicArn: snsArn,
+        };
+        
+        try {
+
+          const snsResponse = await snsClient.publish(snsParams).promise();
+          console.log("Message published to SNS:", snsResponse.MessageId);          
+    
+        } catch (error) {
+
+          console.error("Error publishing message to SNS:", error);          
+        }
 
         console.log("4");
       
