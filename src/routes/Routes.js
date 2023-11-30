@@ -163,7 +163,7 @@ router.post("/v1/assignments", jsonParser, async (req, res) => {
   } catch (error) {
 
     logger.error("400 error");
-    res.json().status(400);
+    res.status(400).json();
   }
 });
 
@@ -398,18 +398,18 @@ router.put("/v1/assignments/:id", jsonParser, async (req, res) => {
           return;
         } else {
           // No rows were updated (assignmentId might not exist)
-          res.json().status(400);
+          res.status(400).json();
           logger.error("400 error");
           return;
         }
       } catch (error) {
-        res.json().status(400);
+        res.status(400).json();
         logger.error("400 error");
         return;
       }
     })
     .catch(() => {
-      res.json().status(400);
+      res.status(400).json();
       logger.error("400 error");
     });
 });
@@ -441,7 +441,7 @@ router.post("/v1/assignments/:id/submission", jsonParser, async (req, res) => {
   const decodeString = await decodeBase64(req.get("Authorization")).catch(() => {
 
     console.log("6");      
-    res.json().status(400);
+    res.status(400).json();
     logger.error("400 error");
   });    
       
@@ -580,15 +580,12 @@ router.post("/v1/assignments/:id/submission", jsonParser, async (req, res) => {
 
       } catch (error) {
 
-        console.log("5");
+        console.log("5", error);
       
-        res.json().status(400);
+        res.status(400).json();
         logger.error("400 error");
         return;
       }
-    
-
-    console.log("7");      
 });
 
 // ************* Default healthz apis *************
