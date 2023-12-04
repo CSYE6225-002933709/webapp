@@ -2,14 +2,19 @@ name: AMI
 
 on:  
   # Triggers the workflow on push or pull request events but only for the "main" branch
+  #pull_request:
+  #  branches: [ "main" ]
+  #  types: 
+  #    - closed
+
+  push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-    types: 
-      - closed
 
 jobs:
   if_merged:
-    if: github.event.pull_request.merged == true
+    #if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -35,31 +40,18 @@ jobs:
       - name: Init packer
         run: packer init .
 
-      - name: Set environment variables        
-        run: |
-          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_ACCESS_KEY }}
-          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_SECRET_KEY }}
-          export AWS_DEFAULT_REGION="us-east-1"
-          
       - name: Running the packer script 
         run: packer build ami.pkr.hcl
 
-      - name: Change AWS credentials to demo
-        run: |
-          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY }}
-          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_KEY }}
-          export AWS_DEFAULT_REGION="us-east-1"
-
-      - name: Install jq
-        run: sudo apt-get install jq
+      - name: Change AWS credentials to demo        
+        uses: aws-actions/configure-aws-credentials@v1        
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_DEV_REGION }}
       
       - name: Extract ami id from manifest.json
         run: ami_id=$(cat manifest.json | grep artifact_id | cut -d ":" -f 3 | tr -d '",')
-
-      - name: Configure variables
-        run: |        
-          TEMPLATE_NAME="my-launch-template"          
-          OLD_VERSION=1
 
       - name: Fetch old launch template data and save it
         run: aws ec2 describe-launch-template-versions --launch-template-name $TEMPLATE_NAME --versions $OLD_VERSION > template-data.json   
