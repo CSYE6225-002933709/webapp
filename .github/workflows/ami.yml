@@ -45,30 +45,40 @@ jobs:
       - name: Running the packer script 
         run: packer build ami.pkr.hcl
 
+
       - name: Change AWS credentials to demo        
         uses: aws-actions/configure-aws-credentials@v1        
         with:
-          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_DEMO_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEMO_SECRET_KEY }}
           aws-region: ${{ secrets.AWS_DEV_REGION }}
       
       - name: Extract ami id from manifest.json
-        run: ami_id=$(cat manifest.json | grep artifact_id | cut -d ":" -f 3 | tr -d '",')
+        run: |      
+          sudo apt-get install jq
+          echo $ami_id
 
       - name: Fetch old launch template data and save it
-        run: aws ec2 describe-launch-template-versions --launch-template-name "myLaunchTemplate" --versions 1 
+        run: aws ec2 describe-launch-template-versions --launch-template-name "myLaunchTemplate" --versions 1 > template-data.json
+
+      #- name: Setup JSON data
+      #  run: |
+      #    sed -i "s/ami-[a-zA-Z0-9]*/${ami_id}/g" template-data.json          
+      #    cat template-data.json
+      #    jq '.LaunchTemplateData' template-data.json.json > extracted_data.json
+      #    jq 'walk(if type == "number" or type == "boolean" then tostring else . end)' extracted_data.json > new_extracted_data.json
+      #    iam_instance_profile_name=$(jq -r '.IamInstanceProfile.Name' new_extracted_data.json)   
+      #    image_id=$(jq -r '.ImageId' new_extracted_data.json)                           
+      #    user_data=$(jq -r '.UserData' new_extracted_data.json)    
+      #    security_group_ids=$(jq -r '.SecurityGroupIds[]' new_extracted_data.json | jq -s -c .)
+
 
       - name: Create launch template
-        run: |
-          new_template_version=$(aws ec2 create-launch-template-version --source-version 1 --launch-template-name "myLaunchTemplate" --launch-template-data "{\"ImageId\":\"$ami_id\"}" --version-description "v2" --query 'LaunchTemplateVersion.VersionNumber' --output text)
-          echo "New Launch Template Version: $new_template_version"    
-        
-      - name: Update autoscaling group
-        run: aws autoscaling update-auto-scaling-group --auto-scaling-group-name "autoScalingGroup" --launch-template "{\"LaunchTemplateName\":"myLaunchTemplate", \"Version\":\"$new_template_version\"}"
+        run: |          
+          ami_id=$(cat manifest.json | jq -r '.builds[-1].artifact_id' | cut -d':' -f2)     
+          new_template_version=$(aws ec2 create-launch-template-version --source-version "1" --launch-template-name "myLaunchTemplate" --launch-template-data "ImageId=$ami_id" --version-description "v2" --query 'LaunchTemplateVersion.VersionNumber' --output text)   
 
-      - name: Instance refresh
-        run: |
+          aws autoscaling update-auto-scaling-group --auto-scaling-group-name "autoScalingGroup" --launch-template "LaunchTemplateName=myLaunchTemplate,Version=$new_template_version"
+ 
           instance_refresh_id=$(aws autoscaling start-instance-refresh --auto-scaling-group-name "autoScalingGroup" --strategy "Rolling" --query 'InstanceRefreshId' --output text)
-          echo "Instance Refresh started. ID: $instance_refresh_id"
-
       
